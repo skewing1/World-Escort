@@ -1,0 +1,226 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  MALE
+  FEMALE
+  ADMIN
+}
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum VerificationLevel {
+  VERIFIED
+  PREMIUM_VERIFIED
+  VIP_VERIFIED
+}
+
+enum MembershipPlan {
+  BRONZE
+  PREMIUM
+  ELITE
+}
+
+enum BillingCycle {
+  MONTHLY
+  ANNUAL
+}
+
+enum MembershipStatus {
+  ACTIVE
+  CANCELLED
+  EXPIRED
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum BillingStatus {
+  PAID
+  REFUNDED
+}
+
+enum ContactRole {
+  GENTLEMAN
+  FEMALE
+  PROSPECT
+}
+
+enum PaymentMethod {
+  STRIPE
+  CRYPTO
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model User {
+  id               Int        @id @default(autoincrement())
+  email            String     @unique
+  passwordHash     String
+  role             UserRole
+  status           UserStatus @default(ACTIVE)
+  firstName        String?
+  lastName         String?
+  phone            String?
+  location         String?
+  bio              String?
+  country          String?
+  stripeCustomerId String?    @unique
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+
+  femaleProfile      FemaleProfile?
+  membership         Membership?
+  connectionRequests ConnectionRequest[] @relation("MemberRequests")
+  contactMessages    ContactMessage[]
+  payments           Payment[]
+}
+
+model FemaleProfile {
+  id           Int               @id @default(autoincrement())
+  userId       Int?              @unique
+  user         User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name         String
+  age          Int
+  country      String
+  city         String
+  languages    String[]
+  verification VerificationLevel @default(VERIFIED)
+  rate         Int
+  bio          String            @db.Text
+  available    Boolean           @default(true)
+  featured     Boolean           @default(false)
+  suspended    Boolean           @default(false)
+  photoId      String
+  photos       String[]
+  tags         String[]
+  height       String?
+  nationality  String?
+  education    String?
+  travel       String[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+
+  connectionRequests ConnectionRequest[]
+
+  @@index([country])
+  @@index([featured])
+  @@index([suspended])
+}
+
+model Membership {
+  id                 Int              @id @default(autoincrement())
+  userId             Int              @unique
+  user               User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan               MembershipPlan
+  billingCycle       BillingCycle     @default(MONTHLY)
+  status             MembershipStatus @default(ACTIVE)
+  requestsUsed       Int              @default(0)
+  requestsLimit      Int
+  totalSpendCents    Int              @default(0)
+  currentPeriodStart DateTime         @default(now())
+  currentPeriodEnd   DateTime
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  billingRecords BillingRecord[]
+}
+
+model BillingRecord {
+  id           Int           @id @default(autoincrement())
+  membershipId Int
+  membership   Membership    @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  description  String
+  amountCents  Int
+  status       BillingStatus @default(PAID)
+  paidAt       DateTime      @default(now())
+}
+
+model ConnectionRequest {
+  id        Int           @id @default(autoincrement())
+  memberId  Int
+  member    User          @relation("MemberRequests", fields: [memberId], references: [id], onDelete: Cascade)
+  profileId Int
+  profile   FemaleProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  message   String        @db.Text
+  status    RequestStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([memberId])
+  @@index([profileId])
+  @@index([status])
+}
+
+model ProfileApproval {
+  id               Int      @id @default(autoincrement())
+  name             String
+  age              Int
+  country          String
+  city             String
+  docsVerified     Boolean  @default(false)
+  selfieVerified   Boolean  @default(false)
+  createdAt        DateTime @default(now())
+}
+
+model ContactMessage {
+  id        Int         @id @default(autoincrement())
+  name      String
+  email     String
+  subject   String
+  role      ContactRole
+  message   String      @db.Text
+  userId    Int?
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime    @default(now())
+}
+
+model PlanConfig {
+  id                Int            @id @default(autoincrement())
+  name              MembershipPlan @unique
+  monthlyPriceCents Int
+  annualPriceCents  Int
+  requestsLimit     Int
+}
+
+model Payment {
+  id                    Int              @id @default(autoincrement())
+  userId                Int
+  user                  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan                  MembershipPlan
+  billingCycle          BillingCycle
+  amountCents           Int
+  method                PaymentMethod
+  status                PaymentStatus    @default(PENDING)
+  stripeSessionId       String?          @unique
+  stripePaymentIntentId String?          @unique
+  cryptoSymbol          String?
+  cryptoAmount          String?
+  cryptoAddress         String?
+  cryptoTxHash          String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  completedAt           DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([stripeSessionId])
+}
