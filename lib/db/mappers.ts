@@ -1,5 +1,7 @@
 import type {
   ConnectionRequest as ConnectionRequestRow,
+  ContactMessage as ContactMessageRow,
+  ContactRole,
   FemaleProfile,
   MembershipPlan,
   PlanConfig,
@@ -7,9 +9,10 @@ import type {
   RequestStatus,
   User,
   VerificationLevel,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import type {
   ConnectionRequest,
+  ContactMessage,
   Member,
   PendingApproval,
   Profile,
@@ -162,4 +165,23 @@ export function parseRequestStatus(value: string): RequestStatus | null {
     rejected: "REJECTED",
   };
   return map[value.toLowerCase()] ?? null;
+}
+
+const CONTACT_ROLE_LABEL: Record<ContactRole, string> = {
+  GENTLEMAN: "Gentleman Member",
+  FEMALE: "Profile Member",
+  PROSPECT: "Prospective",
+};
+
+export function toContactMessageDto(row: ContactMessageRow): ContactMessage {
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    subject: row.subject,
+    role: CONTACT_ROLE_LABEL[row.role],
+    message: row.message,
+    submitted: formatSubmitted(row.createdAt),
+    createdAt: row.createdAt.toISOString(),
+  };
 }

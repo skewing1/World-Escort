@@ -31,7 +31,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const auth = await requireApiRole(["male"]);
+    const auth = await requireApiRole(["male", "admin"]);
     if (auth.error) return auth.error;
 
     const memberId = getSessionUserId(auth.session!);

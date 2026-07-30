@@ -1,20 +1,30 @@
 ﻿"use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, ChevronLeft, ToggleLeft, ToggleRight, Upload, CheckCircle2 } from "lucide-react";
 import type { Profile } from "@/lib/types";
 import { ghostBtn, goldBtn, inp, lbl } from "@/lib/ui-styles";
 
-export function AdminProfileEdit({ profile, isNew, onBack, onSave }: { profile: Profile | null; isNew: boolean; onBack: () => void; onSave: (p: Partial<Profile>) => void }) {
+export function AdminProfileEdit({ profile, isNew, backHref, onSave }: { profile: Profile | null; isNew: boolean; backHref: string; onSave: (p: Partial<Profile>) => void }) {
+  const router = useRouter();
   const [form, setForm] = useState<Partial<Profile>>(profile ?? { name: "", age: 25, country: "", city: "", languages: [], verification: "Verified", rate: 300, available: true, featured: false, suspended: false, bio: "", tags: [], travel: [] });
   const [saved, setSaved] = useState(false);
 
   function set(field: string, value: unknown) { setForm((p) => ({ ...p, [field]: value })); }
-  function handleSave() { onSave(form); setSaved(true); setTimeout(() => { setSaved(false); if (isNew) onBack(); }, 2000); }
+  function handleSave() {
+    onSave(form);
+    setSaved(true);
+    setTimeout(() => {
+      setSaved(false);
+      if (isNew) router.push(backHref);
+    }, 2000);
+  }
 
   return (
     <div>
-      <button onClick={onBack} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6"><ChevronLeft className="w-3.5 h-3.5" /> Back to Profiles</button>
+      <Link href={backHref} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6"><ChevronLeft className="w-3.5 h-3.5" /> Back to Profiles</Link>
       <div className="flex items-center justify-between mb-6">
         <h2 style={{ fontFamily: "'Bodoni Moda', serif" }} className="text-2xl font-normal text-foreground">{isNew ? "Add New Profile" : `Edit: ${profile?.name}`}</h2>
         {saved && <div className="flex items-center gap-2 text-emerald-400 text-sm"><CheckCircle2 className="w-4 h-4" />{isNew ? "Created." : "Saved."}</div>}
@@ -24,7 +34,7 @@ export function AdminProfileEdit({ profile, isNew, onBack, onSave }: { profile: 
           <h3 className="text-xs font-semibold tracking-widests uppercase text-muted-foreground mb-4">Photo</h3>
           {profile ? <div className="aspect-square overflow-hidden bg-secondary border border-border mb-3"><img src={`https://images.unsplash.com/photo-${profile.photoId}?w=300&h=300&fit=crop&auto=format`} alt="" className="w-full h-full object-cover" /></div>
             : <div className="aspect-square border border-dashed border-border flex flex-col items-center justify-center gap-2 text-muted-foreground mb-3 cursor-pointer hover:border-primary hover:text-primary transition-colors"><Upload className="w-8 h-8" /><span className="text-xs">Upload photo</span></div>}
-          <button className={`${ghostBtn("sm")} w-full justify-center`}><Upload className="w-3.5 h-3.5" /> {profile ? "Change" : "Upload"}</button>
+          <button type="button" className={`${ghostBtn("sm")} w-full justify-center`}><Upload className="w-3.5 h-3.5" /> {profile ? "Change" : "Upload"}</button>
           <div className="mt-5 space-y-2 border-t border-border pt-4">
             <h3 className="text-xs font-semibold tracking-widests uppercase text-muted-foreground mb-3">Verification</h3>
             {(["Verified", "Premium Verified", "VIP Verified"] as const).map((v) => <label key={v} className="flex items-center gap-2.5 cursor-pointer"><div onClick={() => set("verification", v)} className={`w-4 h-4 border flex items-center justify-center transition-colors ${form.verification === v ? "bg-primary border-primary" : "border-border"}`}>{form.verification === v && <Check className="w-2.5 h-2.5 text-primary-foreground" />}</div><span className="text-xs text-foreground">{v}</span></label>)}
@@ -33,7 +43,7 @@ export function AdminProfileEdit({ profile, isNew, onBack, onSave }: { profile: 
             {[["Available", "available"], ["Featured", "featured"], ["Suspended", "suspended"]].map(([label, field]) => (
               <div key={field} className="flex items-center justify-between text-xs">
                 <span className="text-muted-foreground">{label}</span>
-                <button onClick={() => set(field, !(form as Record<string, unknown>)[field])} className="cursor-pointer">
+                <button type="button" onClick={() => set(field, !(form as Record<string, unknown>)[field])} className="cursor-pointer">
                   {(form as Record<string, unknown>)[field] ? <ToggleRight className={`w-6 h-6 ${field === "suspended" ? "text-rose-500" : "text-primary"}`} /> : <ToggleLeft className="w-6 h-6 text-muted-foreground" />}
                 </button>
               </div>
@@ -57,12 +67,11 @@ export function AdminProfileEdit({ profile, isNew, onBack, onSave }: { profile: 
             <div><label className={lbl}>Travel Regions</label><input value={(form.travel ?? []).join(", ")} onChange={(e) => set("travel", e.target.value.split(",").map(t => t.trim()).filter(Boolean))} className={inp} /></div>
           </div>
           <div className="flex justify-end gap-3">
-            <button onClick={onBack} className={ghostBtn("md")}>Cancel</button>
-            <button onClick={handleSave} className={goldBtn("md")}>{isNew ? "Create Profile" : "Save Changes"} <Check className="w-4 h-4" /></button>
+            <Link href={backHref} className={ghostBtn("md")}>Cancel</Link>
+            <button type="button" onClick={handleSave} className={goldBtn("md")}>{isNew ? "Create Profile" : "Save Changes"} <Check className="w-4 h-4" /></button>
           </div>
         </div>
       </div>
     </div>
   );
 }
-

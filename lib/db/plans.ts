@@ -1,4 +1,4 @@
-import type { MembershipPlan } from "@prisma/client";
+import type { MembershipPlan } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { planEnumFromLabel, toPlanDto, type PlanDto } from "@/lib/db/mappers";
 

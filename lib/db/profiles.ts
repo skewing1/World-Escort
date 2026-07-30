@@ -1,4 +1,4 @@
-import type { Prisma } from "@prisma/client";
+import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { parseVerificationLevel, PROFILE_VERIFICATIONS, toProfileDto } from "@/lib/db/mappers";
 import type { Profile } from "@/lib/types";

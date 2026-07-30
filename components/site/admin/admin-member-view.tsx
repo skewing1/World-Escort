@@ -1,15 +1,16 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { Ban, CheckCircle2, ChevronLeft, Crown, Mail } from "lucide-react";
 import type { Member } from "@/lib/types";
 import { MEMBER_REQUESTS, PLAN_LIMITS } from "@/lib/mock-data";
 import { lbl, planColor, statusBadge } from "@/lib/ui-styles";
 
-export function AdminMemberView({ member, onBack, onToggleSuspend }: { member: Member; onBack: () => void; onToggleSuspend: () => void }) {
+export function AdminMemberView({ member, backHref, onToggleSuspend }: { member: Member; backHref: string; onToggleSuspend: () => void }) {
   const requests = MEMBER_REQUESTS[member.id] ?? [];
   return (
     <div>
-      <button onClick={onBack} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6"><ChevronLeft className="w-3.5 h-3.5" /> Back to Members</button>
+      <Link href={backHref} className="flex items-center gap-2 text-xs text-muted-foreground hover:text-primary transition-colors cursor-pointer mb-6"><ChevronLeft className="w-3.5 h-3.5" /> Back to Members</Link>
       <div className="grid md:grid-cols-3 gap-6">
         <div className="border border-border bg-card p-6 space-y-5">
           <div className="flex items-start justify-between"><div className="w-14 h-14 bg-secondary border border-primary/30 flex items-center justify-center"><Crown className="w-6 h-6 text-primary/60" /></div><span className={`text-[10px] tracking-widests uppercase px-2 py-1 border ${statusBadge[member.status]}`}>{member.status}</span></div>

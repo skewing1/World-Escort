@@ -11,6 +11,8 @@ export const routes = {
   admin: "/admin",
 } as const;
 
+export { adminRoutes } from "@/lib/admin-routes";
+
 export function purchaseUrl(plan?: string) {
   return plan ? `${routes.purchase}?plan=${encodeURIComponent(plan)}` : routes.purchase;
 }

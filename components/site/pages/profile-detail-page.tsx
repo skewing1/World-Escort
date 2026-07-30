@@ -8,6 +8,7 @@ import {
   UserCheck, ChevronRight, ChevronLeft,
 } from "lucide-react";
 import { useApp } from "@/components/providers/app-provider";
+import { ConnectionRequestModal } from "@/components/site/modals";
 import { ProfileCard } from "@/components/site/profile-card";
 import type { Profile } from "@/lib/types";
 import { PROFILES_INIT } from "@/lib/mock-data";
@@ -18,6 +19,8 @@ export function ProfileDetailPage({ profile }: { profile: Profile }) {
   const router = useRouter();
   const { userRole, goToPurchase } = useApp();
   const [activePhoto, setActivePhoto] = useState(0);
+  const [showRequestModal, setShowRequestModal] = useState(false);
+  const [requestSent, setRequestSent] = useState(false);
   const photos = profile.photos ?? [profile.photoId];
   const related = PROFILES_INIT.filter((p) => p.id !== profile.id && p.country === profile.country && !p.suspended).slice(0, 3);
   const canRequest = userRole === "male" || userRole === "admin";
@@ -70,9 +73,23 @@ export function ProfileDetailPage({ profile }: { profile: Profile }) {
                 <div className="text-xs text-muted-foreground font-light">No additional fees — requests are drawn from your monthly plan allowance.</div>
               </div>
               {canRequest ? (
-                <button disabled={!profile.available} className={`${goldBtn("lg")} w-full justify-center`} style={{ opacity: profile.available ? 1 : 0.5 }}>
-                  {profile.available ? <><MessageCircle className="w-4 h-4" /> Send Connection Request</> : "Currently Unavailable"}
-                </button>
+                requestSent ? (
+                  <div className="flex flex-col items-center text-center py-4 gap-2">
+                    <CheckCircle2 className="w-8 h-8 text-emerald-400" />
+                    <p className="text-sm text-foreground">Your connection request has been sent.</p>
+                    <p className="text-xs text-muted-foreground">We&apos;ll notify you once it has been reviewed.</p>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowRequestModal(true)}
+                    disabled={!profile.available}
+                    className={`${goldBtn("lg")} w-full justify-center`}
+                    style={{ opacity: profile.available ? 1 : 0.5 }}
+                  >
+                    {profile.available ? <><MessageCircle className="w-4 h-4" /> Send Connection Request</> : "Currently Unavailable"}
+                  </button>
+                )
               ) : (
                 <div className="space-y-3"><p className="text-xs text-muted-foreground text-center">A membership is required to send connection requests to female profiles.</p><button onClick={() => goToPurchase("Premium")} className={`${goldBtn("md")} w-full justify-center`}>Get Membership <ChevronRight className="w-4 h-4" /></button></div>
               )}
@@ -87,6 +104,14 @@ export function ProfileDetailPage({ profile }: { profile: Profile }) {
         </div>
         {related.length > 0 && <div className="mt-16 pt-12 border-t border-border"><h2 style={{ fontFamily: "'Bodoni Moda', serif" }} className="text-2xl font-normal text-foreground mb-8">More from {profile.country}</h2><div className="grid grid-cols-2 md:grid-cols-3 gap-4">{related.map((p) => <ProfileCard key={p.id} profile={p} onClick={() => router.push(routes.profile(p.id))} />)}</div></div>}
       </div>
+      {showRequestModal && (
+        <ConnectionRequestModal
+          profileId={profile.id}
+          profileName={profile.name}
+          onClose={() => setShowRequestModal(false)}
+          onSuccess={() => setRequestSent(true)}
+        />
+      )}
     </div>
   );
 }

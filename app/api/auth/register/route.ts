@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
-import type { UserRole } from "@prisma/client";
+import type { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { planEnumFromLabel } from "@/lib/db/mappers";
 import { getPlanConfig } from "@/lib/db/plans";

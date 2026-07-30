@@ -1,4 +1,4 @@
-import type { BillingCycle, MembershipPlan, PaymentMethod, PaymentStatus } from "@prisma/client";
+import type { BillingCycle, MembershipPlan, PaymentMethod, PaymentStatus } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 
 export async function createPayment(data: {

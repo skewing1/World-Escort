@@ -2,16 +2,9 @@ export type UserRole = "guest" | "male" | "female" | "admin";
 
 export type ModalType = "login" | "register" | null;
 
-export type AdminTab = "overview" | "users" | "profiles" | "approvals" | "plans" | "analytics";
-
 export type FemaleTab = "overview" | "profile" | "requests" | "earnings";
 
 export type MaleTab = "overview" | "profile" | "membership" | "requests";
-
-export type AdminSubView =
-  | null
-  | { type: "member-view"; id: number }
-  | { type: "profile-edit"; id: number | "new" };
 
 export interface Profile {
   id: number;
@@ -67,4 +60,15 @@ export interface PendingApproval {
   submitted: string;
   docs: boolean;
   selfie: boolean;
+}
+
+export interface ContactMessage {
+  id: number;
+  name: string;
+  email: string;
+  subject: string;
+  role: string;
+  message: string;
+  submitted: string;
+  createdAt: string;
 }

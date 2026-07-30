@@ -1,5 +1,5 @@
 /**
- * Cross-platform Prisma generate with Windows EBUSY retry + .tmp copy fallback.
+ * Prisma generate wrapper (retries on transient Windows EBUSY locks).
  */
 import { spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -7,8 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const clientDir = path.join(root, "node_modules", ".prisma", "client");
-const engineFile = path.join(clientDir, "query_engine-windows.dll.node");
+const enginesDir = path.join(root, "node_modules", "@prisma", "engines");
 const maxRetries = 5;
 const retryDelayMs = 2000;
 
@@ -16,41 +15,34 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function removeStaleTmpEngines() {
-  if (!fs.existsSync(clientDir)) return;
-  for (const name of fs.readdirSync(clientDir)) {
-    if (!name.startsWith("query_engine-windows.dll.node.tmp")) continue;
-    try {
-      fs.unlinkSync(path.join(clientDir, name));
-      console.log(`Removed stale temp engine: ${name}`);
-    } catch {
-      // ignore — file may be locked
-    }
-  }
-}
+function repairSchemaEngine() {
+  if (!fs.existsSync(enginesDir)) return;
 
-function copyLatestTmpEngine() {
-  if (!fs.existsSync(clientDir)) return false;
-
+  const target = path.join(enginesDir, "schema-engine-windows.exe");
   const tmpFiles = fs
-    .readdirSync(clientDir)
-    .filter((name) => name.startsWith("query_engine-windows.dll.node.tmp"))
+    .readdirSync(enginesDir)
+    .filter((name) => name.startsWith("schema-engine-windows.exe.tmp"))
     .map((name) => {
-      const fullPath = path.join(clientDir, name);
+      const fullPath = path.join(enginesDir, name);
       return { name, fullPath, mtime: fs.statSync(fullPath).mtimeMs };
     })
     .sort((a, b) => b.mtime - a.mtime);
 
-  if (tmpFiles.length === 0) return false;
+  if (tmpFiles.length > 0 && !fs.existsSync(target)) {
+    try {
+      fs.copyFileSync(tmpFiles[0].fullPath, target);
+      console.log(`Restored schema-engine from ${tmpFiles[0].name}`);
+    } catch {
+      // ignore
+    }
+  }
 
-  try {
-    fs.copyFileSync(tmpFiles[0].fullPath, engineFile);
-    console.log(`Copied ${tmpFiles[0].name} -> query_engine-windows.dll.node`);
-    removeStaleTmpEngines();
-    return true;
-  } catch (error) {
-    console.warn("Manual copy failed:", error);
-    return false;
+  for (const file of tmpFiles) {
+    try {
+      fs.unlinkSync(file.fullPath);
+    } catch {
+      // ignore locked temp files
+    }
   }
 }
 
@@ -68,44 +60,27 @@ function runPrismaGenerate() {
 }
 
 async function main() {
-  console.log("Prisma generate (safe)...");
+  console.log("Prisma generate...");
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    removeStaleTmpEngines();
+    repairSchemaEngine();
     console.log(`Attempt ${attempt} of ${maxRetries}...`);
 
     const { code, output } = runPrismaGenerate();
     if (code === 0) {
-      removeStaleTmpEngines();
+      repairSchemaEngine();
       console.log("Prisma client generated successfully.");
       process.exit(0);
     }
 
-    if (output.includes("EBUSY")) {
-      console.warn(
-        `Engine file locked (EBUSY). Retrying in ${retryDelayMs / 1000}s...`,
-      );
-      console.warn(
-        "Tip: stop 'npm run dev', Prisma Studio, and other terminals using this project.",
-      );
+    if (output.includes("EBUSY") && attempt < maxRetries) {
+      console.warn(`Generate failed (EBUSY). Retrying in ${retryDelayMs / 1000}s...`);
       await sleep(retryDelayMs);
-
-      if (attempt === maxRetries && copyLatestTmpEngine()) {
-        console.log("Prisma engine restored via .tmp copy workaround.");
-        process.exit(0);
-      }
       continue;
     }
 
     process.exit(code);
   }
-
-  console.error("\nPrisma generate failed after all retries.");
-  console.error("1. Stop all dev servers (npm run dev)");
-  console.error("2. Close Prisma Studio");
-  console.error("3. Run: npm run db:generate");
-  console.error("4. Restart Cursor/VS Code if the lock persists");
-  process.exit(1);
 }
 
 main();

@@ -51,23 +51,23 @@ export const ThreeDGlobe: React.FC<{ countryGroups: CountryGroup[] }> = ({ count
       .then((data) => setCountries(data));
   }, []);
 
-  // 2. Polling for recent NFTs 
-  useEffect(() => {
-    const fetchLatestNfts = async () => {
-      try {
-        const res = await fetch('/api/nft/latest?limit=5');
-        if (res.ok) {
-          const { nfts } = await res.json();
-          setRecentNfts(nfts);
-        }
-      } catch (e) {
-        console.error('Error fetching latest NFTs', e);
-      }
-    };
-    fetchLatestNfts();
-    const interval = setInterval(fetchLatestNfts, 10000);
-    return () => clearInterval(interval);
-  }, []);
+  // // 2. Polling for recent Profiles 
+  // useEffect(() => {
+  //   const fetchLatestNfts = async () => {
+  //     try {
+  //       const res = await fetch('/api/profiles?limit=5');
+  //       if (res.ok) {
+  //         const { nfts } = await res.json();
+  //         setRecentNfts(nfts);
+  //       }
+  //     } catch (e) {
+  //       console.error('Error fetching latest NFTs', e);
+  //     }
+  //   };
+  //   fetchLatestNfts();
+  //   const interval = setInterval(fetchLatestNfts, 10000);
+  //   return () => clearInterval(interval);
+  // }, []);
 
   // 3. Initial auto-rotation and Controls Configuration
   useEffect(() => {

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { getSession, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Check, Crown, Eye, Star, X } from "lucide-react";
+import { ArrowRight, Check, Crown, Eye, Loader2, MessageCircle, Star, X } from "lucide-react";
 import { dashboardPathForRole } from "@/lib/auth-helpers";
 import { PLANS_DATA } from "@/lib/mock-data";
 import { goldBtn, inp, lbl, planColor } from "@/lib/ui-styles";
@@ -258,6 +258,92 @@ export function RegisterModal({ onClose, goToPurchase }: { onClose: () => void; 
             </button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+export function ConnectionRequestModal({
+  profileId,
+  profileName,
+  onClose,
+  onSuccess,
+}: {
+  profileId: number;
+  profileName: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+
+    try {
+      const res = await fetch("/api/connection-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ profileId, message }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(typeof data.error === "string" ? data.error : "Failed to send connection request");
+      }
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send connection request");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" style={{ background: "rgba(7,5,13,0.92)" }} onClick={onClose}>
+      <div className="w-full max-w-md bg-card border border-border p-10" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <div className="text-[10px] tracking-[0.35em] uppercase text-primary mb-1">Connection Request</div>
+            <h2 style={{ fontFamily: "'Bodoni Moda', serif" }} className="text-2xl font-normal">
+              Message {profileName}
+            </h2>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground cursor-pointer">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-sm text-muted-foreground font-light mb-6">
+          Introduce yourself briefly. Your request will be reviewed by our admin team before contact details are shared.
+        </p>
+        <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+          {error && (
+            <div className="px-4 py-3 text-sm text-rose-400 bg-rose-950/40 border border-rose-800/50">{error}</div>
+          )}
+          <div>
+            <label className={lbl}>Your Message</label>
+            <textarea
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              rows={5}
+              required
+              minLength={10}
+              placeholder="Share a little about yourself and why you'd like to connect…"
+              className={`${inp} resize-none`}
+              disabled={loading}
+            />
+          </div>
+          <button type="submit" disabled={loading} className={`${goldBtn("md")} w-full justify-center`} style={{ opacity: loading ? 0.7 : 1 }}>
+            {loading ? (
+              <>Sending… <Loader2 className="w-4 h-4 animate-spin" /></>
+            ) : (
+              <>Send Request <MessageCircle className="w-4 h-4" /></>
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );

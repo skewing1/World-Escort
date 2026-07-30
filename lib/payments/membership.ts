@@ -1,4 +1,4 @@
-import type { BillingCycle, MembershipPlan } from "@prisma/client";
+import type { BillingCycle, MembershipPlan } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getPlanConfig } from "@/lib/db/plans";
 import { planEnumFromLabel, planLabelFromEnum } from "@/lib/db/mappers";

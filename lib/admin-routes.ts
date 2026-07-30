@@ -1,0 +1,15 @@
+export const adminRoutes = {
+  root: "/admin",
+  overview: "/admin/overview",
+  members: "/admin/members",
+  member: (id: number) => `/admin/members/${id}`,
+  profiles: "/admin/profiles",
+  profile: (id: number) => `/admin/profiles/${id}`,
+  profileNew: "/admin/profiles/new",
+  profileEdit: (id: number) => `/admin/profiles/${id}/edit`,
+  verifications: "/admin/verifications",
+  connectionRequests: "/admin/connection-requests",
+  contacts: "/admin/contacts",
+  plans: "/admin/plans",
+  analytics: "/admin/analytics",
+} as const;

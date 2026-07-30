@@ -1,5 +1,6 @@
-import { AdminPortal } from "@/components/site/admin";
+import { redirect } from "next/navigation";
+import { adminRoutes } from "@/lib/admin-routes";
 
 export default function Page() {
-  return <AdminPortal />;
+  redirect(adminRoutes.overview);
 }

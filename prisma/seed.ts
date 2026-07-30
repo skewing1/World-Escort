@@ -1,10 +1,11 @@
-import {
+import type {
   MembershipPlan,
-  PrismaClient,
   RequestStatus,
   VerificationLevel,
-} from "@prisma/client";
+} from "@/generated/prisma/client";
 import bcrypt from "bcryptjs";
+import { prisma } from "../lib/prisma";
+
 import {
   CONN_REQS_INIT,
   MEMBERS_INIT,
@@ -12,8 +13,6 @@ import {
   PLANS_DATA,
   PROFILES_INIT,
 } from "../lib/mock-data";
-
-const prisma = new PrismaClient();
 
 const DEMO_PASSWORD = "password123";
 
@@ -175,6 +174,12 @@ async function main() {
     });
   }
 
+  await prisma.$executeRawUnsafe(`
+    SELECT setval(pg_get_serial_sequence('"FemaleProfile"', 'id'), COALESCE((SELECT MAX(id) FROM "FemaleProfile"), 1));
+    SELECT setval(pg_get_serial_sequence('"User"', 'id'), COALESCE((SELECT MAX(id) FROM "User"), 1));
+    SELECT setval(pg_get_serial_sequence('"ProfileApproval"', 'id'), COALESCE((SELECT MAX(id) FROM "ProfileApproval"), 1));
+  `);
+
   await prisma.user.create({
     data: {
       email: "admin@aurum-private.com",
@@ -199,12 +204,6 @@ async function main() {
       },
     },
   });
-
-  await prisma.$executeRawUnsafe(`
-    SELECT setval(pg_get_serial_sequence('"FemaleProfile"', 'id'), COALESCE((SELECT MAX(id) FROM "FemaleProfile"), 1));
-    SELECT setval(pg_get_serial_sequence('"User"', 'id'), COALESCE((SELECT MAX(id) FROM "User"), 1));
-    SELECT setval(pg_get_serial_sequence('"ProfileApproval"', 'id'), COALESCE((SELECT MAX(id) FROM "ProfileApproval"), 1));
-  `);
 
   console.log("Seed completed.");
   console.log(`Demo password for all users: ${DEMO_PASSWORD}`);

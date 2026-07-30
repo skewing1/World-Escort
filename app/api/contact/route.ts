@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import type { ContactRole } from "@prisma/client";
+import type { ContactRole } from "@/generated/prisma/client";
+import { requireApiRole } from "@/lib/api/auth";
+import { listContactMessages } from "@/lib/db/contact-messages";
 import { prisma } from "@/lib/prisma";
 
 function mapContactRole(role: string): ContactRole {
@@ -9,6 +11,19 @@ function mapContactRole(role: string): ContactRole {
     prospect: "PROSPECT",
   };
   return map[role.toLowerCase()] ?? "PROSPECT";
+}
+
+export async function GET() {
+  try {
+    const auth = await requireApiRole(["admin"]);
+    if (auth.error) return auth.error;
+
+    const messages = await listContactMessages();
+    return NextResponse.json({ messages, total: messages.length });
+  } catch (error) {
+    console.error("GET /api/contact failed:", error);
+    return NextResponse.json({ error: "Failed to fetch contact messages" }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
